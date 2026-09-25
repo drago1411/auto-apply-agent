@@ -1,4 +1,5 @@
 import { BaseAdapter } from './baseAdapter.js';
+import { AIFormFiller } from '../aiFiller.js';
 
 export class GenericAdapter extends BaseAdapter {
   constructor(page, profile) {
@@ -190,6 +191,19 @@ export class GenericAdapter extends BaseAdapter {
     const resumeUploaded = await this.filler.uploadResumeIfMissing('input[type="file"]');
     if (resumeUploaded) filledAny = true;
 
+    // AI-powered fallback: fill any remaining fields the standard filler couldn't handle
+    try {
+      console.log('[GenericAdapter] Running AI form filler for unknown/custom fields...');
+      const aiFiller = new AIFormFiller(page, profile);
+      const aiResult = await aiFiller.fillUnknownForm();
+      if (aiResult.filled > 0) {
+        filledAny = true;
+        console.log(`[GenericAdapter] AI filler filled ${aiResult.filled} additional fields (${aiResult.cached} from cache).`);
+      }
+    } catch (aiErr) {
+      console.warn(`[GenericAdapter] AI filler failed (non-critical): ${aiErr.message}`);
+    }
+
     // Highlight any submit button (NEVER CLICK IT)
     await page.evaluate(() => {
       const submitBtn = document.querySelector('button[type="submit"], input[type="submit"], button:has-text("Submit")');
@@ -202,7 +216,7 @@ export class GenericAdapter extends BaseAdapter {
     return {
       success: filledAny,
       status: filledAny ? 'FILLED' : 'NEEDS_REVIEW',
-      notes: filledAny ? 'Standard fields populated. Tab ready for review & Submit.' : 'Page opened in tab. Ready for your review.'
+      notes: filledAny ? 'Standard + AI fields populated. Tab ready for review & Submit.' : 'Page opened in tab. Ready for your review.'
     };
   }
 

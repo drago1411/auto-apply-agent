@@ -103,6 +103,15 @@ export function initDb(dbPath = null) {
       resolution TEXT,
       FOREIGN KEY(job_id) REFERENCES jobs(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS answer_bank (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      question_key TEXT UNIQUE NOT NULL,
+      answer TEXT NOT NULL,
+      hit_count INTEGER DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
   `);
 
   // Safe migrations for legacy database files (add columns before creating indexes!)
@@ -504,4 +513,78 @@ export function clearDatabase() {
   db.exec('DELETE FROM activity_logs;');
   db.exec('DELETE FROM jobs;');
   return { success: true };
+}
+
+// ─── Answer Bank ──────────────────────────────────────────────────────────────
+
+/**
+ * Normalises a question string into a stable lookup key.
+ * @param {string} question
+ * @returns {string}
+ */
+function normalizeQuestionKey(question) {
+  return (question || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 200);
+}
+
+/**
+ * Stores an AI-generated answer in the answer bank so it can be reused.
+ *
+ * @param {string} question  - The form field label / question text.
+ * @param {string} answer    - The value to store.
+ */
+export function addAnswerToBank(question, answer) {
+  try {
+    const db  = initDb();
+    const key = normalizeQuestionKey(question);
+    if (!key || !answer) return;
+    const now = new Date().toISOString();
+
+    const existing = db.prepare('SELECT id FROM answer_bank WHERE question_key = ?').get(key);
+    if (existing) {
+      db.prepare('UPDATE answer_bank SET answer = ?, hit_count = hit_count + 1, updated_at = ? WHERE question_key = ?')
+        .run(String(answer), now, key);
+    } else {
+      db.prepare('INSERT INTO answer_bank (question_key, answer, hit_count, created_at, updated_at) VALUES (?, ?, 1, ?, ?)')
+        .run(key, String(answer), now, now);
+    }
+  } catch (err) {
+    console.warn('[AnswerBank] Failed to save answer:', err.message);
+  }
+}
+
+/**
+ * Retrieves a cached answer for the given question, or null if not found.
+ *
+ * @param {string} question
+ * @returns {string|null}
+ */
+export function getAnswerFromBank(question) {
+  try {
+    const db  = initDb();
+    const key = normalizeQuestionKey(question);
+    if (!key) return null;
+    const row = db.prepare('SELECT answer FROM answer_bank WHERE question_key = ?').get(key);
+    return row ? row.answer : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Returns all entries in the answer bank (for dashboard display).
+ *
+ * @param {number} limit
+ * @returns {object[]}
+ */
+export function getAnswerBank(limit = 200) {
+  try {
+    return initDb().prepare('SELECT * FROM answer_bank ORDER BY hit_count DESC, id DESC LIMIT ?').all(limit);
+  } catch {
+    return [];
+  }
 }
