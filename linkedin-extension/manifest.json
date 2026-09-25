@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Job Application Agent - LinkedIn Assistant",
+  "version": "1.0.0",
+  "description": "Assists with LinkedIn Easy Apply pre-filling, safely stopping before the final submit button for human review.",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "*://*.linkedin.com/*",
+    "http://localhost:3000/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Job Application Agent"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.linkedin.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

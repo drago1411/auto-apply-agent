@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Application Agent - Operations Console</title>
+  <meta name="description" content="Personal AI job application tracker, Gmail watcher, and ATS automation console.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Top Navigation Header -->
+    <header class="top-nav">
+      <div class="brand">
+        <div class="brand-badge">
+          <span class="pulse-dot"></span>
+          <span>AGENT LIVE</span>
+        </div>
+        <h1 class="brand-title">Job Application Agent</h1>
+      </div>
+
+      <div class="header-actions">
+        <button id="btnScanGmail" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Scan Gmail
+        </button>
+        <button id="btnRunMatcher" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Run Matcher
+        </button>
+        <button id="btnAutoPilot" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 14px rgba(16,185,129,0.3);" title="Runs complete pipeline: Scan Gmail -> Match Jobs -> Auto-Fill in Browser Tabs">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          ⚡ Full Auto-Pilot
+        </button>
+        <button id="btnSubmitAll" class="btn btn-primary" style="background: linear-gradient(135deg, #059669, #10b981); font-weight: 800; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);" title="Open filled applications for review; final submission is manual.">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          ✅ Review All Filled
+        </button>
+        <button id="btnRefresh" class="btn btn-icon" title="Refresh Dashboard">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Metrics Cards Grid -->
+    <section class="metrics-grid">
+      <div class="metric-card card-total">
+        <div class="metric-header">
+          <span class="metric-label">Total Ingested</span>
+          <span class="metric-icon">📁</span>
+        </div>
+        <div class="metric-value" id="statTotal">0</div>
+        <div class="metric-sub">Tracked from alerts</div>
+      </div>
+
+      <div class="metric-card card-new">
+        <div class="metric-header">
+          <span class="metric-label">New Queue</span>
+          <span class="metric-icon">✨</span>
+        </div>
+        <div class="metric-value" id="statNew">0</div>
+        <div class="metric-sub">Awaiting scoring</div>
+      </div>
+
+      <div class="metric-card card-matched">
+        <div class="metric-header">
+          <span class="metric-label">Matched</span>
+          <span class="metric-icon">🎯</span>
+        </div>
+        <div class="metric-value" id="statMatched">0</div>
+        <div class="metric-sub">Above criteria score</div>
+      </div>
+
+      <div class="metric-card card-applied">
+        <div class="metric-header">
+          <span class="metric-label">Applied</span>
+          <span class="metric-icon">🚀</span>
+        </div>
+        <div class="metric-value" id="statApplied">0</div>
+        <div class="metric-sub">Submitted successfully</div>
+      </div>
+
+      <div class="metric-card card-review">
+        <div class="metric-header">
+          <span class="metric-label">Needs Review</span>
+          <span class="metric-icon">⚠️</span>
+        </div>
+        <div class="metric-value" id="statReview">0</div>
+        <div class="metric-sub">Unrecognized ATS layout</div>
+      </div>
+
+      <div class="metric-card card-skipped">
+        <div class="metric-header">
+          <span class="metric-label">Skipped</span>
+          <span class="metric-icon">⏭️</span>
+        </div>
+        <div class="metric-value" id="statSkipped">0</div>
+        <div class="metric-sub">Below threshold/blacklisted</div>
+      </div>
+    </section>
+
+    <section id="blockedQueue" class="panel" style="margin-bottom: 24px;"></section>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Jobs Management Panel -->
+      <div class="panel jobs-panel">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <h2 class="panel-title">Job Applications</h2>
+            <span class="badge" id="jobCountBadge">0 Jobs</span>
+          </div>
+
+          <div class="filter-controls">
+            <div class="search-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="searchInput" placeholder="Filter company, role...">
+            </div>
+
+            <select id="statusFilter" class="dropdown">
+              <option value="all">All Statuses</option>
+              <option value="new">New</option>
+              <option value="matched">Matched</option>
+              <option value="applied">Applied</option>
+              <option value="needs_manual_review">Needs Review</option>
+              <option value="skipped">Skipped</option>
+              <option value="failed">Failed</option>
+            </select>
+
+            <select id="platformFilter" class="dropdown">
+              <option value="all">All Platforms</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="greenhouse">Greenhouse</option>
+              <option value="lever">Lever</option>
+              <option value="workday">Workday</option>
+              <option value="indeed">Indeed</option>
+              <option value="ats">Generic ATS</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Job Title & Company</th>
+                <th>Platform</th>
+                <th>Score</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="jobsTableBody">
+              <tr>
+                <td colspan="6" class="loading-cell">Loading job stream...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Activity Side Panel -->
+      <aside class="panel activity-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Activity Stream</h2>
+          <span class="live-tag">REALTIME</span>
+        </div>
+        <div class="logs-container" id="logsContainer">
+          <div class="log-item empty-state">No recent activities</div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Modal for Manual Review / Status Update -->
+    <div class="modal-backdrop" id="jobModal" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 id="modalTitle">Job Details</h3>
+          <button class="modal-close" id="btnModalClose">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastNotification" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>

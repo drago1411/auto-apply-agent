@@ -1,0 +1,42 @@
+{
+  "name": "job-application-agent",
+  "version": "1.0.0",
+  "description": "Personal job application automation system with Gmail watcher, ATS auto-apply, and LinkedIn Easy Apply assistant",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "orchestrator": "node orchestrator.js",
+    "auth:gmail": "node watcher/gmailAuth.js",
+    "watch": "node -e \"import('./watcher/gmailWatcher.js').then(m => m.runGmailWatcher())\"",
+    "match": "node -e \"import('./matcher/matcherService.js').then(m => m.runMatcher())\"",
+    "apply:ats": "node -e \"import('./ats-engine/runner.js').then(m => m.runAtsEngine())\"",
+    "demo": "node scripts/seedDemo.js",
+    "reset": "node -e \"import('./tracker/db.js').then(m => { m.clearDatabase(); console.log('Database cleared.'); })\"",
+    "log": "node tracker/cli.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": [
+    "job-automation",
+    "gmail-api",
+    "playwright",
+    "ats",
+    "linkedin-assistant"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "googleapis": "^144.0.0",
+    "imapflow": "^2.0.0",
+    "mailparser": "^3.9.23",
+    "node-cron": "^3.0.3",
+    "playwright": "^1.50.1",
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  }
+}

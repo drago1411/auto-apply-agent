@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn Easy Apply Assistant</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="popup-body">
+  <div class="popup-container">
+    <header class="popup-header">
+      <div class="popup-title">
+        <span class="pulse-dot"></span>
+        <h2>Easy Apply Agent</h2>
+      </div>
+      <span id="connStatus" class="status-indicator">Connecting...</span>
+    </header>
+
+    <div class="safety-banner">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span>Safe Mode Active: Final submit is strictly manual.</span>
+    </div>
+
+    <section class="queue-section">
+      <div class="queue-header">
+        <h3>Matched LinkedIn Jobs</h3>
+        <span id="queueCount" class="count-badge">0</span>
+      </div>
+
+      <div id="jobList" class="job-list">
+        <div class="loading-state">Loading matched jobs from local tracker...</div>
+      </div>
+    </section>
+
+    <footer class="popup-footer">
+      <button id="btnPreFillCurrent" class="btn btn-primary btn-full">
+        Pre-Fill Current Page Modal
+      </button>
+      <button id="btnScrapePage" class="btn btn-sm btn-full" style="margin-top: 4px; padding: 7px;">
+        📥 Import Jobs From Current LinkedIn Tab
+      </button>
+      <a href="http://localhost:3000" target="_blank" class="dashboard-link">
+        Open Operations Dashboard &rarr;
+      </a>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
