@@ -107,7 +107,7 @@ export class WorkdayAdapter extends BaseAdapter {
       }
 
       // Fill password & verify password
-      const effectivePassword = password || 'Harish@2003';
+      const effectivePassword = password || process.env.PORTAL_PASSWORD || '';
       const pwField = await page.$('input[data-automation-id="password"], input[type="password"]:not([data-automation-id="verifyPassword"])');
       if (pwField) {
         await pwField.fill('').catch(() => {});

@@ -310,10 +310,12 @@ export function getMatchedJobs(limit = 20) {
 
 export function getEligibleApplyJobs(limit = 25) {
   const db = initDb();
+  // Only pick MATCHED jobs and high-scoring NEW jobs for auto-apply.
+  // NEEDS_REVIEW jobs (CAPTCHA, login, account walls) are retried only
+  // via manual Resume in the dashboard — not in the auto-batch.
   return db.prepare(`
     SELECT * FROM jobs
-    WHERE (UPPER(status) IN ('MATCHED', 'NEEDS_REVIEW') OR (UPPER(status) = 'NEW' AND match_score >= 50))
-      AND UPPER(status) NOT IN ('APPLIED', 'SKIPPED')
+    WHERE (UPPER(status) = 'MATCHED' OR (UPPER(status) = 'NEW' AND match_score >= 50))
     ORDER BY match_score DESC, id ASC
     LIMIT ?
   `).all(limit);

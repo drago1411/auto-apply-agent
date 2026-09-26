@@ -30,6 +30,22 @@ export async function executeAutomationCycle() {
   addLog(null, 'info', 'Starting scheduled automation cycle');
 
   try {
+    // Pre-step: Reset any jobs stuck in FILLING for more than 30 minutes
+    try {
+      const { initDb } = await import('./tracker/db.js');
+      const db = initDb();
+      const staleMinutes = 30;
+      const staleThreshold = new Date(Date.now() - staleMinutes * 60 * 1000).toISOString();
+      const stale = db.prepare(
+        "UPDATE jobs SET status = 'MATCHED', notes = 'Auto-reset from stale FILLING state' WHERE UPPER(status) = 'FILLING' AND updated_at < ?"
+      ).run(staleThreshold);
+      if (stale.changes > 0) {
+        console.log(`[Orchestrator] ♻️  Reset ${stale.changes} stale FILLING job(s) back to MATCHED.`);
+      }
+    } catch (resetErr) {
+      console.warn(`[Orchestrator] Stale FILLING reset warning: ${resetErr.message}`);
+    }
+
     // Step 0: Active Job Hunting (LinkedIn + Indeed + Google Jobs + Gmail)
     console.log('\n--- Step 0: Active Job Hunting (All Sources via Hub) ---');
     let hubResult = { totalFound: 0, totalIngested: 0, sources: [] };

@@ -31,7 +31,7 @@ export class IcimsAdapter extends BaseAdapter {
     const captchaEarly = await this.checkForCaptchaAndPause(page, jobTitle);
     if (captchaEarly) return captchaEarly;
 
-    const password = personal.portal_password || process.env.PORTAL_PASSWORD || 'Harish@2003';
+    const password = personal.portal_password || process.env.PORTAL_PASSWORD || '';
 
     // ── Account / login wall check ────────────────────────────────────────
     const hasPwInput = (await formFrame.locator('input[type="password"]').count().catch(() => 0)) > 0;
